@@ -42,6 +42,9 @@ trigger:
   - platform: time
     at: !input time_night
 action:
+  - variables:
+      day_temp: "{{ state_attr(helper_day_temp, 'value') | float }}"
+      night_temp: "{{ state_attr(helper_night_temp, 'value') | float }}"
   - choose:
       - conditions:
           - condition: trigger
@@ -51,7 +54,7 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ state_attr(input_number.temperatur_tag, 'value') | float }}"
+              temperature: "{{ day_temp }}"
       - conditions:
           - condition: trigger
             id: "1"  # Nachtmodus-Trigger
@@ -60,4 +63,4 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ state_attr(input_number.temperatur_nacht, 'value') | float }}"
+              temperature: "{{ night_temp }}"
