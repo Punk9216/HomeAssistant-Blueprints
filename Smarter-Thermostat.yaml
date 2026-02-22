@@ -48,29 +48,18 @@ condition:
     state: "off"
 
 action:
-
   - variables:
-      day_entity: !input helper_day_temp
-      night_entity: !input helper_night_temp
-      target_temp: 0
+      # Temperatur aus Helfern auslesen
+      day_temp: "{{ states(!input helper_day_temp) | float }}"
+      night_temp: "{{ states(!input helper_night_temp) | float }}"
+      target_temp: >
+        {% if trigger.id == 'day' %}
+          {{ day_temp }}
+        {% else %}
+          {{ night_temp }}
+        {% endif %}
 
-  - choose:
-
-      - conditions:
-          - condition: trigger
-            id: day
-        sequence:
-          - variables:
-              target_temp: "{{ states(day_entity) | float }}"
-
-      - conditions:
-          - condition: trigger
-            id: night
-        sequence:
-          - variables:
-              target_temp: "{{ states(night_entity) | float }}"
-
-  # 👉 Service erst NACH choose!
+  # EIN Service Call außerhalb von choose
   - service: climate.set_temperature
     target:
       entity_id: !input thermostat_entities
