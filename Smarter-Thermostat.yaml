@@ -1,7 +1,7 @@
 blueprint:
   name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
   description: >
-    Steuert **mehrere Thermostate** mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten.
+    Steuert mehrere Thermostate mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten.
     Die Temperaturen werden per Helfer eingestellt – perfekt für Räume mit gleicher Temperatur.
   domain: automation
   input:
@@ -11,7 +11,7 @@ blueprint:
       selector:
         entity:
           domain: climate
-          multiple: true  # Ermöglicht die Auswahl mehrerer Thermostate
+          multiple: true
     time_day:
       name: "Uhrzeit für Tagesmodus"
       description: "Uhrzeit, zu der die Tagestemperatur aktiviert werden soll (z. B. 07:00)."
@@ -49,15 +49,15 @@ action:
         sequence:
           - service: climate.set_temperature
             target:
-              entity_id: !input thermostat_entities  # Setzt die Temperatur für ALLE ausgewählten Thermostate
+              entity_id: !input thermostat_entities
             data:
-              temperature: "{{ states(!input helper_day_temp) | float }}"
+              temperature: "{{ state_attr(!input helper_day_temp, 'value') | float }}"
       - conditions:
           - condition: trigger
             id: "1"  # Nachtmodus-Trigger
         sequence:
           - service: climate.set_temperature
             target:
-              entity_id: !input thermostat_entities  # Setzt die Temperatur für ALLE ausgewählten Thermostate
+              entity_id: !input thermostat_entities
             data:
-              temperature: "{{ states(!input helper_night_temp) | float }}"
+              temperature: "{{ state_attr(!input helper_night_temp, 'value') | float }}"
