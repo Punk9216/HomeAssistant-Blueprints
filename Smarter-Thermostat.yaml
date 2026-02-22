@@ -27,6 +27,35 @@ blueprint:
       description: "Wähle den Zahlen-Helfer für die Tagestemperatur (z. B. 22°C)."
       selector:
         entity:
+blueprint:
+  name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
+  description: >
+    Steuert mehrere Thermostate mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten.
+    Die Temperaturen werden per Helfer eingestellt – perfekt für Räume mit gleicher Temperatur.
+  domain: automation
+  input:
+    thermostat_entities:
+      name: "Thermostate (mehrere auswählbar)"
+      description: "Wähle alle Thermostate aus, die gleichzeitig gesteuert werden sollen."
+      selector:
+        entity:
+          domain: climate
+          multiple: true
+    time_day:
+      name: "Uhrzeit für Tagesmodus"
+      description: "Uhrzeit, zu der die Tagestemperatur aktiviert werden soll (z. B. 07:00)."
+      selector:
+        time: {}
+    time_night:
+      name: "Uhrzeit für Nachtmodus"
+      description: "Uhrzeit, zu der die Nachttemperatur aktiviert werden soll (z. B. 22:00)."
+      selector:
+        time: {}
+    helper_day_temp:
+      name: "Helfer für Tagestemperatur"
+      description: "Wähle den Zahlen-Helfer für die Tagestemperatur (z. B. 22°C)."
+      selector:
+        entity:
           domain: input_number
     helper_night_temp:
       name: "Helfer für Nachttemperatur"
@@ -51,7 +80,7 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ state_attr(helper_day_temp, 'value') | float }}"
+              temperature: "{{ state_attr(this.helper_day_temp, 'value') | float }}"
       - conditions:
           - condition: trigger
             id: "1"  # Nachtmodus-Trigger
@@ -60,5 +89,5 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ state_attr(helper_night_temp, 'value') | float }}"
-# Test
+              temperature: "{{ state_attr(this.helper_night_temp, 'value') | float }}"
+# Test2
