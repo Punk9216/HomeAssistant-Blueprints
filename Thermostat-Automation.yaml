@@ -1,0 +1,60 @@
+blueprint:
+  name: "Thermostat-Zeitplan mit zwei Temperaturstufen"
+  description: "Steuert ein Thermostat mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten. Die Temperaturen werden per Helfer eingestellt."
+  domain: automation
+  input:
+    thermostat_entity:
+      name: "Thermostat"
+      description: "Wähle das Thermostat-Gerät aus."
+      selector:
+        entity:
+          domain: climate
+    time_day:
+      name: "Uhrzeit für Tagesmodus"
+      description: "Uhrzeit, zu der die Tagestemperatur aktiviert werden soll (z. B. 07:00)."
+      selector:
+        time: {}
+    time_night:
+      name: "Uhrzeit für Nachtmodus"
+      description: "Uhrzeit, zu der die Nachttemperatur aktiviert werden soll (z. B. 22:00)."
+      selector:
+        time: {}
+    helper_day_temp:
+      name: "Helfer für Tagestemperatur"
+      description: "Wähle den Zahlen-Helfer für die Tagestemperatur (z. B. 22°C)."
+      selector:
+        entity:
+          domain: input_number
+    helper_night_temp:
+      name: "Helfer für Nachttemperatur"
+      description: "Wähle den Zahlen-Helfer für die Nachttemperatur (z. B. 17°C)."
+      selector:
+        entity:
+          domain: input_number
+
+mode: single
+trigger:
+  - platform: time
+    at: !input time_day
+  - platform: time
+    at: !input time_night
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "0"  # Tagesmodus-Trigger
+        sequence:
+          - service: climate.set_temperature
+            target:
+              entity_id: !input thermostat_entity
+            data:
+              temperature: "{{ states(!input helper_day_temp) | float }}"
+      - conditions:
+          - condition: trigger
+            id: "1"  # Nachtmodus-Trigger
+        sequence:
+          - service: climate.set_temperature
+            target:
+              entity_id: !input thermostat_entity
+            data:
+              temperature: "{{ states(!input helper_night_temp) | float }}"
