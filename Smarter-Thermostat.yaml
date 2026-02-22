@@ -1,5 +1,5 @@
 blueprint:
-  name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen (Skript-basiert)"
+  name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
   description: >
     Steuert mehrere Thermostate mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten.
     Die Temperaturen werden per Helfer eingestellt – perfekt für Räume mit gleicher Temperatur.
@@ -47,16 +47,22 @@ action:
           - condition: trigger
             id: "0"  # Tagesmodus-Trigger
         sequence:
-          - service: script.thermostat_temperatur_setzen_dynamisch
+          - service: climate.set_temperature
+            target:
+              entity_id: !input thermostat_entities
             data:
-              thermostat_entities: !input thermostat_entities
-              temperature_helper: !input helper_day_temp
+              temperature: >
+                {% set helper = states(helper_day_temp) %}
+                {{ helper.state | float }}
       - conditions:
           - condition: trigger
             id: "1"  # Nachtmodus-Trigger
         sequence:
-          - service: script.thermostat_temperatur_setzen_dynamisch
+          - service: climate.set_temperature
+            target:
+              entity_id: !input thermostat_entities
             data:
-              thermostat_entities: !input thermostat_entities
-              temperature_helper: !input helper_night_temp
-              
+              temperature: >
+                {% set helper = states(helper_night_temp) %}
+                {{ helper.state | float }}
+                
