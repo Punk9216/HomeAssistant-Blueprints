@@ -1,7 +1,7 @@
 blueprint:
-  name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
+  name: "Gruppen-Thermostat-Zeitplan mit Sofort-Update"
   description: >
-    Steuert mehrere Thermostate mit zwei Temperaturstufen (z. B. Tag/Nacht).
+    Steuert Thermostate nach Zeitplan und reagiert sofort auf Änderungen der Temperatur-Helfer.
   domain: automation
   input:
     thermostat_entities:
@@ -29,39 +29,46 @@ blueprint:
         entity:
           domain: input_number
 
-# WICHTIG: Inputs für Templates in Variablen überführen
 variables:
   day_helper: !input helper_day_temp
   night_helper: !input helper_night_temp
+  t_day: !input time_day
+  t_night: !input time_night
 
-mode: single
+mode: restart # Restart ist hier besser, falls kurz hintereinander Änderungen kommen
 
 trigger:
+  # Zeitbasierte Trigger
   - platform: time
     at: !input time_day
-    id: "day"
+    id: "time_trigger"
   - platform: time
     at: !input time_night
-    id: "night"
+    id: "time_trigger"
+  # Trigger bei Änderung der Helfer-Werte
+  - platform: state
+    entity_id: 
+      - !input helper_day_temp
+      - !input helper_night_temp
+    id: "helper_trigger"
 
 action:
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: "day"
-        sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input thermostat_entities
-            data:
-              # Hier nutzen wir nun die oben definierte Variable
-              temperature: "{{ states(day_helper) | float(21) }}"
-      - conditions:
-          - condition: trigger
-            id: "night"
-        sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input thermostat_entities
-            data:
-              temperature: "{{ states(night_helper) | float(18) }}"
+  - service: climate.set_temperature
+    target:
+      entity_id: !input thermostat_entities
+    data:
+      temperature: >
+        {% set now_time = now().strftime('%H:%M:00') %}
+        {# Logik: Wenn aktuelle Zeit zwischen Tag-Zeit und Nacht-Zeit liegt, nimm Tag-Temp #}
+        {% if t_day <= now_time < t_night %}
+          {{ states(day_helper) | float(21) }}
+        {% elif t_day > t_night %}
+          {# Fallstrick: Nachtmodus geht über Mitternacht hinaus #}
+          {% if now_time >= t_day or now_time < t_night %}
+            {{ states(day_helper) | float(21) }}
+          {% else %}
+            {{ states(night_helper) | float(18) }}
+          {% endif %}
+        {% else %}
+          {{ states(night_helper) | float(18) }}
+        {% endif %}
