@@ -7,57 +7,58 @@ blueprint:
   input:
     thermostat_entities:
       name: "Thermostate (mehrere auswählbar)"
-      description: "Wähle alle Thermostate aus, die gleichzeitig gesteuert werden sollen."
       selector:
         entity:
           domain: climate
           multiple: true
     time_day:
       name: "Uhrzeit für Tagesmodus"
-      description: "Uhrzeit, zu der die Tagestemperatur aktiviert werden soll (z. B. 07:00)."
       selector:
         time: {}
     time_night:
       name: "Uhrzeit für Nachtmodus"
-      description: "Uhrzeit, zu der die Nachttemperatur aktiviert werden soll (z. B. 22:00)."
       selector:
         time: {}
     helper_day_temp:
       name: "Helfer für Tagestemperatur"
-      description: "Wähle den Zahlen-Helfer für die Tagestemperatur (z. B. 22°C)."
       selector:
         entity:
           domain: input_number
     helper_night_temp:
       name: "Helfer für Nachttemperatur"
-      description: "Wähle den Zahlen-Helfer für die Nachttemperatur (z. B. 17°C)."
       selector:
         entity:
           domain: input_number
 
 mode: single
+
 trigger:
   - platform: time
     at: !input time_day
+    id: day
   - platform: time
     at: !input time_night
+    id: night
+
 action:
   - variables:
-      day_temp: "{{ state_attr(helper_day_temp, 'value') | float }}"
-      night_temp: "{{ state_attr(helper_night_temp, 'value') | float }}"
+      day_temp: "{{ states(!input helper_day_temp) | float }}"
+      night_temp: "{{ states(!input helper_night_temp) | float }}"
+
   - choose:
       - conditions:
           - condition: trigger
-            id: "0"  # Tagesmodus-Trigger
+            id: day
         sequence:
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat_entities
             data:
               temperature: "{{ day_temp }}"
+
       - conditions:
           - condition: trigger
-            id: "1"  # Nachtmodus-Trigger
+            id: night
         sequence:
           - service: climate.set_temperature
             target:
