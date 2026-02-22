@@ -3,26 +3,26 @@ blueprint:
   domain: automation
   input:
     thermostat_entities:
-      name: "Thermostate (mehrere auswählbar)"
+      name: "Thermostate"
       selector:
         entity:
           domain: climate
           multiple: true
     time_day:
-      name: "Uhrzeit für Tagesmodus"
+      name: "Uhrzeit Tag"
       selector:
         time: {}
     time_night:
-      name: "Uhrzeit für Nachtmodus"
+      name: "Uhrzeit Nacht"
       selector:
         time: {}
     helper_day_temp:
-      name: "Helfer für Tagestemperatur"
+      name: "Tagestemperatur Helfer"
       selector:
         entity:
           domain: input_number
     helper_night_temp:
-      name: "Helfer für Nachttemperatur"
+      name: "Nachttemperatur Helfer"
       selector:
         entity:
           domain: input_number
@@ -48,13 +48,8 @@ condition:
     state: "off"
 
 action:
-  - variables:
-      day_helper: !input helper_day_temp
-      night_helper: !input helper_night_temp
-      day_temp: "{{ states(day_helper) | float }}"
-      night_temp: "{{ states(night_helper) | float }}"
-
   - choose:
+
       - conditions:
           - condition: trigger
             id: day
@@ -63,7 +58,8 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ day_temp }}"
+              temperature: >
+                {{ states(!input helper_day_temp) | float }}
 
       - conditions:
           - condition: trigger
@@ -73,4 +69,5 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: "{{ night_temp }}"
+              temperature: >
+                {{ states(!input helper_night_temp) | float }}
