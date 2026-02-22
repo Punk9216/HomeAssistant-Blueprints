@@ -52,6 +52,7 @@ action:
   - variables:
       day_entity: !input helper_day_temp
       night_entity: !input helper_night_temp
+      target_temp: 0
 
   - choose:
 
@@ -59,20 +60,19 @@ action:
           - condition: trigger
             id: day
         sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input thermostat_entities
-            data: >
-              {% set t = states(day_entity) | float %}
-              {"temperature": {{ t }} }
+          - variables:
+              target_temp: "{{ states(day_entity) | float }}"
 
       - conditions:
           - condition: trigger
             id: night
         sequence:
-          - service: climate.set_temperature
-            target:
-              entity_id: !input thermostat_entities
-            data: >
-              {% set t = states(night_entity) | float %}
-              {"temperature": {{ t }} }
+          - variables:
+              target_temp: "{{ states(night_entity) | float }}"
+
+  # 👉 Service erst NACH choose!
+  - service: climate.set_temperature
+    target:
+      entity_id: !input thermostat_entities
+    data:
+      temperature: "{{ target_temp }}"
