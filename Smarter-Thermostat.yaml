@@ -1,6 +1,7 @@
 blueprint:
   name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
   domain: automation
+
   input:
     thermostat_entities:
       name: "Thermostate"
@@ -8,24 +9,29 @@ blueprint:
         entity:
           domain: climate
           multiple: true
+
     time_day:
       name: "Uhrzeit Tag"
       selector:
         time: {}
+
     time_night:
       name: "Uhrzeit Nacht"
       selector:
         time: {}
+
     helper_day_temp:
       name: "Tagestemperatur Helfer"
       selector:
         entity:
           domain: input_number
+
     helper_night_temp:
       name: "Nachttemperatur Helfer"
       selector:
         entity:
           domain: input_number
+
     summer_mode_helper:
       name: "Sommermodus"
       selector:
@@ -48,6 +54,12 @@ condition:
     state: "off"
 
 action:
+
+  # 👉 HIER Blueprint Inputs in echte Variablen wandeln
+  - variables:
+      day_entity: !input helper_day_temp
+      night_entity: !input helper_night_temp
+
   - choose:
 
       - conditions:
@@ -58,8 +70,7 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: >
-                {{ states(!input helper_day_temp) | float }}
+              temperature: "{{ states(day_entity) | float }}"
 
       - conditions:
           - condition: trigger
@@ -69,5 +80,4 @@ action:
             target:
               entity_id: !input thermostat_entities
             data:
-              temperature: >
-                {{ states(!input helper_night_temp) | float }}
+              temperature: "{{ states(night_entity) | float }}"
