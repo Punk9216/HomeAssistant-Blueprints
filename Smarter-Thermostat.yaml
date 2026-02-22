@@ -1,8 +1,5 @@
 blueprint:
   name: "Gruppen-Thermostat-Zeitplan mit zwei Temperaturstufen"
-  description: >
-    Steuert mehrere Thermostate mit zwei Temperaturstufen (z. B. Tag/Nacht) zu festgelegten Uhrzeiten.
-    Die Temperaturen werden per Helfer eingestellt – perfekt für Räume mit gleicher Temperatur.
   domain: automation
   input:
     thermostat_entities:
@@ -29,6 +26,11 @@ blueprint:
       selector:
         entity:
           domain: input_number
+    summer_mode_helper:
+      name: "Sommermodus"
+      selector:
+        entity:
+          domain: input_boolean
 
 mode: single
 
@@ -40,10 +42,17 @@ trigger:
     at: !input time_night
     id: night
 
+condition:
+  - condition: state
+    entity_id: !input summer_mode_helper
+    state: "off"
+
 action:
   - variables:
-      day_temp: "{{ states(!input helper_day_temp) | float }}"
-      night_temp: "{{ states(!input helper_night_temp) | float }}"
+      day_helper: !input helper_day_temp
+      night_helper: !input helper_night_temp
+      day_temp: "{{ states(day_helper) | float }}"
+      night_temp: "{{ states(night_helper) | float }}"
 
   - choose:
       - conditions:
